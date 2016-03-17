@@ -1,10 +1,11 @@
 # Getting_and_Cleaning_Data
 
-The tidy data obtained use the achive Xtrain and Xtest to merge into a unique archivo with name "tidydata.txt".
+The tidy data obtained use the achive X_train.txt and X_test.txt to merge into a unique archivo with name "tidydata.txt".
 
 The tidydata have 68 features with the following names
 
 Num feature	Name feature
+
 1		"subject"
 2		"label"
 3		"tbodyaccmeanx"
