@@ -3,43 +3,36 @@ library(plyr)
 library(Hmisc)
 library(reshape2)
 
-xtr<-read.csv("./UCI HAR Dataset/train/X_train.txt",sep=" ",header = FALSE)
-xte<-read.csv("./UCI HAR Dataset/test/X_test.txt",sep=" ",header = FALSE)
-#head(baxt,2)
-# Processing of acce x data of the train
-res<-xtr[1,!is.na(xtr[1,])]
-nxtr<-dim(xtr)[1]
-for (i in 2:nxtr){
-  res[i,]<-xtr[i,!is.na(xtr[i,])]
-}
-xtr<-res
-# Processing of acce x data of the test
-res<-xte[1,!is.na(xte[1,])]
-nxte<-dim(xte)[1]
-for (i in 2:nxte){
-  res[i,]<-xte[i,!is.na(xte[i,])]
-}
-xte<-res
-rm(res)
+setwd("~/Data Science Specialization/Getting and Cleaning Data/project")
 
-#Create the unique dataset
-xdata<-xtr
-for (i in 1:nxte){
-  xdata[nxtr+i,]<-xte[i,]
-}
+test_labels<-read.table("./UCI HAR Dataset/test/y_test.txt",col.names = "label")
+test_subjects<-read.table("./UCI HAR Dataset/test/subject_test.txt",col.names = "subject")
+test_data<-read.table("./UCI HAR Dataset/test/X_test.txt")
 
+train_labels<-read.table("./UCI HAR Dataset/train/y_train.txt",col.names = "label")
+train_subjects<-read.table("./UCI HAR Dataset/train/subject_train.txt",col.names = "subject")
+train_data<-read.table("./UCI HAR Dataset/train/X_train.txt")
+
+alldata<-rbind(cbind(train_subjects,train_labels,train_data),cbind(test_subjects,test_labels,test_data))
 
 # Names features
-NamesFeatures<-read.csv("./UCI HAR Dataset/features.txt",sep=" ",header = FALSE)
-namesfeatures<-as.character(NamesFeatures$V2)
-colnames(xdata)<-namesfeatures
+NamesFeatures<-read.table("./UCI HAR Dataset/features.txt",strip.white = TRUE,stringsAsFactors = FALSE)
+NamesFeatures.mean.std <- NamesFeatures[grep("mean\\(\\)|std\\(\\)",NamesFeatures$V2), ]
+alldata.mean.std<-alldata[ , c(1,2,NamesFeatures.mean.std$V1+2)]
+
+
+labels<-read.table("./UCI HAR Dataset/activity_labels.txt",stringsAsFactors = FALSE)
+
+alldata.mean.std$label<-labels[alldata.mean.std$label,2]
+
+
+temp_colnames<-c("subject","label",NamesFeatures.mean.std$V2)
+temp_colnames<-tolower(gsub("[^[:alpha:]]","",temp_colnames))
+colnames(alldata.mean.std)<-temp_colnames
+
+
+new_data <- aggregate(alldata.mean.std[, 3:ncol(alldata.mean.std)], by=list(subject = alldata.mean.std$subject, label = alldata.mean.std$label), mean)
+
 
 #writing the txt file
-write.table(xdata,file = "tidydata.txt",row.names = FALSE,sep = ",")
-
-# Obtaining the Mean values of the features
-nfeatures<-dim(xdata)[2]
-averagefeatures<-data.frame(mean(xdata[,1]))
-colnames(averagefeatures)<-namesfeatures
-head(averagefeatures)
-write.table(averagefeatures,file = "averagetidydata.txt",row.names = FALSE,sep = ",")
+write.table(new_data,file = "tidydata.txt",row.names = FALSE,sep = ",")
